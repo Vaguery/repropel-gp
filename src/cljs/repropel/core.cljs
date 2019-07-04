@@ -14,7 +14,8 @@
 (def router
   (reitit/router
    [["/" :index]
-    ["/about" :about]]))
+    ["/about" :about]]
+    ))
 
 (defn path-for [route & [params]]
   (if params
@@ -49,7 +50,7 @@
   (do
     (propel/collect-the-args!
       arg-atom
-      :override-hash {:target-problem :simple-cubic :population-size 200 :parent-selection :lexicase :misbehavior-penalty +1e10})
+      :override-hash {:target-problem :birthday-quadratic :population-size 200 :parent-selection :lexicase :misbehavior-penalty +1e10})
       (propel/propel-setup! pop-atom
                      (:population-size @arg-atom)
                      (:instructions @arg-atom)
@@ -69,29 +70,50 @@
 
 (defn argmap-view
   [arg-atom]
-  [:h3 "Argmap:"]
-  [:p
-    {:style
-      {:background-color "linen" :font-family :monospace}}
-    (str @arg-atom)
-    ])
+  [:div
+    [:h3 "Argmap:"]
+    [:p
+      {:style
+        {:background-color "linen" :font-family :monospace}}
+      (str @arg-atom)
+      ]])
 
 
 (defn dude-list [items]
   [:ol
    (for [item items]
-     ^{:key (:id item)} [:li (str (:behaviors item) " => " (:total-error item))]
+     ^{:key (:id item)} [:li (str (propel/push-from-plushy (:plushy item)) " => " (:total-error item))]
       )])
 
 
+; (defn behavior-list [items]
+;   [:ol
+;   (let [clumps (group-by :behaviors items)]
+;     (for [k (keys clumps)]
+;       (let [example (first (get clumps k))]
+;         ^{:key (:id example)}
+;           [:li (str "total: " (:total-error example) " : " k " count: " (count (get clumps k)))]
+;         )))])
+;
+; (defn behavior-view
+;   [pop-atom]
+;   [:div
+;     [:h3 "unique behaviors:"]
+;     [:div
+;       {:style
+;         {:background-color "linen" :font-family :monospace}}
+;       [behavior-list @pop-atom]
+;       ]])
+
 (defn population-view
   [pop-atom]
-  [:h3 "Population:"]
   [:div
-    {:style
-      {:background-color "linen" :font-family :monospace}}
-    [dude-list @pop-atom]
-    ])
+    [:h3 "Population:"]
+    [:div
+      {:style
+        {:background-color "linen" :font-family :monospace}}
+      [dude-list @pop-atom]
+      ]])
 
 
 (defn reset-button
@@ -140,6 +162,7 @@
       [step-button population-atom arg-atom]
       ; [loader]
       [show-counter]
+      ; [behavior-view population-atom]
       [population-view population-atom]
       ]]))
 
@@ -149,6 +172,10 @@
           [:h1 "About repropel"]]
           ))
 
+(defn dude-page [dude]
+  (fn [] [:span.main
+          [:h1 "Individual " (:id dude) ]]
+          ))
 
 ;; -------------------------
 ;; Translate routes -> page components

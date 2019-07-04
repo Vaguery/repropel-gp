@@ -5,7 +5,8 @@
    [reitit.frontend :as reitit]
    [clerk.core :as clerk]
    [accountant.core :as accountant]
-   [repropel.propel :as propel]))
+   [repropel.propel :as propel]
+   ))
 
 ;; -------------------------
 ;; Routes
@@ -48,7 +49,7 @@
   (do
     (propel/collect-the-args!
       arg-atom
-      :override-hash {:target-problem :contains-TA-or-AT? :parent-selection :lexicase :population-size 50})
+      :override-hash {:target-problem :simple-cubic :population-size 200 :parent-selection :lexicase :misbehavior-penalty +1e10})
       (propel/propel-setup! pop-atom
                      (:population-size @arg-atom)
                      (:instructions @arg-atom)
@@ -79,7 +80,7 @@
 (defn dude-list [items]
   [:ol
    (for [item items]
-     ^{:key item} [:li (str (propel/push-from-plushy (:plushy item)) " => " (:total-error item))]
+     ^{:key (:id item)} [:li (str (:behaviors item) " => " (:total-error item))]
       )])
 
 

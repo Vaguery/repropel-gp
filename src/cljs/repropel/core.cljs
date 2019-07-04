@@ -48,12 +48,13 @@
   (do
     (propel/collect-the-args!
       arg-atom
-      :override-hash {:target-problem :simple-cubic})
+      :override-hash {:target-problem :contains-TA-or-AT? :parent-selection :lexicase :population-size 50})
       (propel/propel-setup! pop-atom
                      (:population-size @arg-atom)
                      (:instructions @arg-atom)
                      (:max-initial-plushy-size @arg-atom))
       (score-pop! pop-atom arg-atom)
+      (reset! counter-atom 0)
       ))
 
 (reset-propel! population-atom arg-atom)
@@ -90,7 +91,8 @@
       {:background-color "linen" :font-family :monospace}}
     [dude-list @pop-atom]
     ])
-;
+
+
 (defn reset-button
   [pop-atom arg-atom]
   [:button

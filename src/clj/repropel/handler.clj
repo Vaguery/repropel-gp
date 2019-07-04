@@ -23,7 +23,8 @@
    (head)
    [:body {:class "body-container"}
     mount-target
-    (include-js "/js/app.js")]))
+    (include-js "/js/app.js")
+    ]))
 
 
 (defn index-handler

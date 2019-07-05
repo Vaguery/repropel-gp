@@ -28,11 +28,69 @@
 ;; Page components
 
 
-(def population-atom (r/atom []))
+(defonce population-atom (r/atom []))
+(defonce arg-atom (r/atom {}))
+(defonce pause-atom (r/atom false))
+(defonce counter-atom (r/atom 0))
 
-(def arg-atom (r/atom {}))
 
-(def counter-atom (r/atom 0))
+;;;;;; arg view
+
+(defn row [label input]
+  [:div
+    [:span input]
+    [:label label]
+    ])
+
+
+(def fancy-args-template
+  [:div
+    [:p "Population size"]
+      [:input {:field :numeric :id :population-size}]
+
+    ; [:p "Max initial Plushy size"]
+    ;   [:input {:field :numeric :id :max-initial-plushy-size}]
+
+    [:p "Target Problem"]
+      (row "Simple cubic regression" [:input {:field :radio :value :simple-cubic :name :target-problem :checked true}])
+      (row "Simple quadratic regression" [:input {:field :radio :value :simple-quadratic :name :target-problem}])
+      (row "Birthday quadratic regression" [:input {:field :radio :value :birthday-quadratic :name :target-problem}])
+      (row "Contains-T?" [:input {:field :radio :value :contains-T? :name :target-problem}])
+      (row "Contains-TA-or-AT?" [:input {:field :radio :value :contains-TA-or-AT? :name :target-problem}])
+
+    [:p "Parent selection"]
+      (row "Tournament" [:input {:field :radio :value :tournament :name :parent-selection :checked true}])
+      (row "Lexicase" [:input {:field :radio :value :lexicase :name :parent-selection}])
+      ])
+
+
+
+
+(defn fancy-argmap-ui
+  [arg-atom]
+  (fn []
+    [:div {:style {:background-color "linen" :font-family :monospace}}
+      [:h2 "Argmap:" ]
+      [rf/bind-fields
+        fancy-args-template
+        arg-atom
+        (fn [id path value {:keys [target-problem] :as args}]
+          (when (= id :target-problem)
+            (merge @arg-atom (propel/update-derived-args @arg-atom))))
+            ]
+      [:p (str @arg-atom)]
+      ]))
+
+
+(defn argmap-view
+  [arg-atom]
+  [:div {:style {:background-color "linen" :font-family :monospace}}
+    [:h2 "Argmap:" ]
+    [:p (str @arg-atom)]
+    ])
+
+
+;;;;;;;;;
 
 (defn score-pop!
   [pop-atom arg-atom]
@@ -69,15 +127,6 @@
     (map :total-error population))
     )
 
-(defn argmap-view
-  [arg-atom]
-  [:div
-    [:h3 "Argmap:"]
-    [:p
-      {:style
-        {:background-color "linen" :font-family :monospace}}
-      (str @arg-atom)
-      ]])
 
 
 (defn dude-list [items]
@@ -85,26 +134,6 @@
    (for [item items]
      ^{:key (:id item)} [:li (str (propel/push-from-plushy (:plushy item)) " => " (:total-error item))]
       )])
-
-
-; (defn behavior-list [items]
-;   [:ol
-;   (let [clumps (group-by :behaviors items)]
-;     (for [k (keys clumps)]
-;       (let [example (first (get clumps k))]
-;         ^{:key (:id example)}
-;           [:li (str "total: " (:total-error example) " : " k " count: " (count (get clumps k)))]
-;         )))])
-;
-; (defn behavior-view
-;   [pop-atom]
-;   [:div
-;     [:h3 "unique behaviors:"]
-;     [:div
-;       {:style
-;         {:background-color "linen" :font-family :monospace}}
-;       [behavior-list @pop-atom]
-;       ]])
 
 (defn population-view
   [pop-atom]
@@ -145,29 +174,26 @@
     "Step!"
     ])
 
-;
+
 (reset-propel! population-atom arg-atom)
+
 
 (defn show-counter
   []
   [:span ": " @counter-atom])
 
-
-
 (defn home-page []
   (let [])
   (fn []
     [:span.main
-     [:h1 "Welcome to repropel"]
-     [:div
-      [argmap-view arg-atom]
-      [reset-button population-atom arg-atom]
-      [step-button population-atom arg-atom]
-      ; [loader]
-      [show-counter]
-      ; [behavior-view population-atom]
-      [population-view population-atom]
-      ]]))
+      [:h1 "Welcome to repropel"]
+      [:div
+        [fancy-argmap-ui arg-atom]
+        [reset-button population-atom arg-atom]
+        [step-button population-atom arg-atom]
+        [show-counter]
+        [population-view population-atom]
+        ]]))
 
 
 (defn about-page []

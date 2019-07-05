@@ -501,7 +501,7 @@
           population
           (score-sorted-population population errfxn argmap))]
     (repeatedly
-      (count population)
+      (:population-size argmap)
       #(new-individual evaluated-pop argmap)
       )))
 
@@ -721,19 +721,24 @@
       (apply hash-map ,)
       ))
 
+
+(defn update-derived-args
+  [arg-hash]
+  (let [demo (get demo-problems (:target-problem arg-hash) :UNKNOWN-PROBLEM)]
+    (-> arg-hash
+      (assoc , :training-function demo)
+      (assoc , :error-function (:error-function demo))
+      )))
+
+
 (defn collect-the-args!
   "Omnibus function to merge all the arguments in play, and store them in the atom specified.
 
   If no optional arguments are passed in, the default-args result. The other named arguments are :cli-hash (for parsed arguments from a command line) and :override-hash (for a hash of arguments passed in programmatically). These are merged into default-args in that order. Finally, some necessary derived arguments are inserted."
   [arg-atom & {:keys [cli-hash override-hash] :or {cli-hash {} override-hash {}}}]
-  (let [merged (merge default-args cli-hash override-hash)
-        demo (get demo-problems (:target-problem merged) :UNKNOWN-PROBLEM)]
-    (reset!
-      arg-atom
-      (-> merged
-        (assoc , :training-function demo)
-        (assoc , :error-function (:error-function demo))
-        ))))
+  (let [merged (merge default-args cli-hash override-hash)]
+    (reset! arg-atom (update-derived-args merged))
+    ))
 
 ;;;;;;;;;;;;;;
 

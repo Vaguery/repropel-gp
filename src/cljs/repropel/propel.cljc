@@ -480,7 +480,8 @@
 
 (def population-atom (atom [])) ;; stores population between steps
 (def args-atom (atom {})) ;; stores arg hash
-(def pause-control (atom true)) ;; intended to be overridden externally
+(def pause-atom (atom false)) ;; intended to be overridden externally
+(def counter-atom (atom 0)) ;; to manage generation limits on runs
 
 (defn propel-setup!
   "Build an initial population using the specified arguments, placing it in the specified atom"
@@ -506,26 +507,30 @@
 
 (defn propel-gp!
   "Main GP loop, rewritten to use a population atom and a dotimes."
-  [& {:keys [population-size max-generations error-function instructions
-           max-initial-plushy-size]
-    :as argmap}]
+  [pop-atom arg-atom pause-atom counter-atom]
 
-  (report-starting-line argmap)
-  (propel-setup! population-atom
-                 population-size
-                 instructions
-                 max-initial-plushy-size)
-  (dotimes [gen max-generations]
-    (let [evaluated-pop
-           (if (:errors (first @population-atom))
-              @population-atom
-              (score-sorted-population @population-atom error-function argmap))]
-      (report-generation evaluated-pop gen)
+  (let [pop-size (:population-size @arg-atom)
+        instructions (:instructions @arg-atom)
+        max-plushy (:max-initial-plushy-size @arg-atom)
+        max-gens (:max-generations @arg-atom)
+        error-fxn (:error-function @arg-atom)]
 
-      (reset! population-atom
-        (repeatedly population-size
-                    #(new-individual evaluated-pop argmap)
-                    )))))
+    (report-starting-line @arg-atom)
+    (propel-setup! pop-atom
+                   pop-size
+                   instructions
+                   max-plushy)
+    (while (and (not @pause-atom) (< @counter-atom max-gens))
+      (let [evaluated-pop
+             (if (:errors (first @pop-atom))
+                @pop-atom
+                (score-sorted-population @pop-atom error-fxn @arg-atom))]
+        (report-generation evaluated-pop @counter-atom)
+        (swap! counter-atom inc)
+        (reset! pop-atom
+          (repeatedly pop-size
+                      #(new-individual evaluated-pop @arg-atom)
+                      ))))))
 
 ;;;;;;;;;;;;;;;;;;
 
@@ -735,8 +740,11 @@
 (defn repl-main
   "Provided as a simple hands-on check for somebody working in a cljs REPL. Accepts no arguments! Just to see that things are \"working\"..."
   []
-  (collect-the-args! args-atom :override-hash {:max-generations 3})
-  (apply propel-gp! (mapcat seq @args-atom))
+  (collect-the-args! args-atom :override-hash {:max-generations 30})
+  (propel-gp! population-atom
+              args-atom
+              pause-atom
+              counter-atom)
   )
 
 #?(:clj
@@ -747,5 +755,8 @@
         (collect-the-args! args-atom
           :cli-hash (parse-cli-args cli-args))
         (println @args-atom)
-        (apply propel-gp! (mapcat seq @args-atom))
+        (propel-gp! population-atom
+                    args-atom
+                    pause-atom
+                    counter-atom)
         )))

@@ -6,6 +6,7 @@
    [clerk.core :as clerk]
    [accountant.core :as accountant]
    [repropel.propel :as propel]
+   [reagent-forms.core :as rf]
    ))
 
 ;; -------------------------
@@ -50,7 +51,7 @@
   (do
     (propel/collect-the-args!
       arg-atom
-      :override-hash {:target-problem :birthday-quadratic :population-size 200 :parent-selection :lexicase :misbehavior-penalty +1e10})
+      :override-hash {:target-problem :simple-quadratic :population-size 100 :misbehavior-penalty +1e10})
       (propel/propel-setup! pop-atom
                      (:population-size @arg-atom)
                      (:instructions @arg-atom)
@@ -150,6 +151,8 @@
 (defn show-counter
   []
   [:span ": " @counter-atom])
+
+
 
 (defn home-page []
   (let [])

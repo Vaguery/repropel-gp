@@ -25,7 +25,7 @@
 ;; :step-limit 100
 ;; :parent-selection :tournament
 ;;   - :lexicase
-;; :misbehavior-penalty 1000000
+;; :misbehavior-penalty 1e12
 ;; :tournament-size 5
 
 
@@ -725,7 +725,7 @@
     :max-initial-plushy-size 50
     :step-limit 100
     :parent-selection :tournament
-    :misbehavior-penalty 1000000
+    :misbehavior-penalty +1e12
     :tournament-size 5
     :max-generations 100
     })

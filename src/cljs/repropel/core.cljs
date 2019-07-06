@@ -7,6 +7,7 @@
    [accountant.core :as accountant]
    [repropel.propel :as propel]
    [reagent-forms.core :as rf]
+   [cljs.core.async :as async]
    ))
 
 ;; -------------------------
@@ -159,10 +160,11 @@
 
 (defn forward-and-score
   [pop-atom arg-atom]
-    (do
-      (swap! pop-atom #(propel/propel-population-step % @arg-atom))
+    (async/go
+      (when-not @pause-atom
+        (swap! pop-atom #(propel/propel-population-step % @arg-atom))
       (score-pop! pop-atom arg-atom)
-      (swap! counter-atom inc)
+      (swap! counter-atom inc))
       ))
 
 (defn step-button
@@ -187,6 +189,14 @@
     "Step 10x!"
     ])
 
+(defn pause-button
+  [pauser]
+  (row "Paused?"
+    [:input.toggle
+      {:type "checkbox"
+      :checked @pause-atom
+      :on-change #(swap! pause-atom not)}
+      ]))
 
 (reset-propel! population-atom arg-atom)
 
@@ -205,6 +215,7 @@
         [reset-button population-atom arg-atom]
         [step-button population-atom arg-atom]
         [step-10-button population-atom arg-atom]
+        [pause-button pause-atom]
         [show-counter]
         [population-view population-atom]
         ]]))

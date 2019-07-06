@@ -55,6 +55,7 @@
       (row "Simple cubic regression" [:input {:field :radio :value :simple-cubic :name :target-problem :checked true}])
       (row "Simple quadratic regression" [:input {:field :radio :value :simple-quadratic :name :target-problem}])
       (row "Birthday quadratic regression" [:input {:field :radio :value :birthday-quadratic :name :target-problem}])
+      (row "Random regression" [:input {:field :radio :value :random-regression :name :target-problem}])
       (row "Contains-T?" [:input {:field :radio :value :contains-T? :name :target-problem}])
       (row "Contains-TA-or-AT?" [:input {:field :radio :value :contains-TA-or-AT? :name :target-problem}])
 
@@ -120,20 +121,18 @@
 
 (reset-propel! population-atom arg-atom)
 
-(defn just-the-errors
-  [population]
-  (clojure.string/join
-    " "
-    (map :total-error population))
-    )
-
-
 
 (defn dude-list [items]
   [:ol
    (for [item items]
-     ^{:key (:id item)} [:li (str (propel/push-from-plushy (:plushy item)) " => " (:total-error item))]
-      )])
+     ^{:key (:id item)}
+      [:li
+        (str (propel/push-from-plushy (:plushy item))
+              " => "
+              (:total-error item)
+              " : "
+              (propel/behavior-map (:training-function @arg-atom) item)
+              )])])
 
 (defn population-view
   [pop-atom]

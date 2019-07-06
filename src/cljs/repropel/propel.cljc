@@ -16,6 +16,7 @@
 ;; - :target-problem :simple-cubic
 ;;   - :simple-quadratic
 ;;   - :birthday-quadratic
+;;   - :random-integer-data
 ;;   - :contains-T?
 ;;   - :contains-TA-or-AT?
 ;; :population-size 200
@@ -241,10 +242,11 @@
      1
      10
      100
+     789
      true
      false
      ""
-     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+     ; "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
      "A"
      "C"
      "G"
@@ -431,26 +433,6 @@
                                        (:instructions argmap))
        :else (uniform-deletion (:plushy (select-parent pop argmap)))))})
 
-(defn report-generation
-  "Reports information each generation."
-  [pop generation]
-  (let [best (first pop)]
-    (println "-------------------------------------------------------")
-    (println "               Report for Generation" generation)
-    (println "-------------------------------------------------------")
-    (print "Best plushy: ") (prn (:plushy best))
-    (print "Best program: ") (prn (push-from-plushy (:plushy best)))
-    (println "Best total error:" (:total-error best))
-    (println "Best errors:" (:errors best))
-    (println "Best behaviors:" (:behaviors best))
-    (println)
-    ))
-
-
-(defn report-starting-line
-  [args] (println "Starting GP with args:" args))
-
-
 
 (defn random-individual
   "Produce one random individual"
@@ -476,12 +458,40 @@
     (map (partial error-fxn args) population)
     ))
 
-;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;; persistence
 
 (def population-atom (atom [])) ;; stores population between steps
 (def args-atom (atom {})) ;; stores arg hash
 (def pause-atom (atom false)) ;; intended to be overridden externally
 (def counter-atom (atom 0)) ;; to manage generation limits on runs
+
+;;;;;;;;;;;;;;;;;; reporting
+
+(defn behavior-map
+  [problem individual]
+  (into (sorted-map) (zipmap (:args problem) (:behaviors individual))))
+
+(defn report-generation
+  "Reports information each generation."
+  [pop generation]
+  (let [best (first pop)]
+    (println "-------------------------------------------------------")
+    (println "               Report for Generation" generation)
+    (println "-------------------------------------------------------")
+    (print "Best plushy: ") (prn (:plushy best))
+    (print "Best program: ") (prn (push-from-plushy (:plushy best)))
+    (println "Best total error:" (:total-error best))
+    (println "Best errors:" (:errors best))
+    (println "Behavior of best:"
+      (behavior-map (:training-function @args-atom) best))
+    (println)
+    ))
+
+
+(defn report-starting-line
+  [args] (println "Starting GP with args:" args))
+
+;;;;;;;;;;;;;;;;;; search
 
 (defn propel-setup!
   "Build an initial population using the specified arguments, placing it in the specified atom"
@@ -532,7 +542,6 @@
                       #(new-individual evaluated-pop @arg-atom)
                       ))))))
 
-;;;;;;;;;;;;;;;;;;
 
 (defn run-once
   "Run the program with the given initial state, until the step limit is reached."
@@ -653,12 +662,24 @@
    :error-function regression-error-function
    })
 
+(def random-integer-pairs
+  (let [xs (sort (take 4 (shuffle (range -10 10))))]
+    (reduce #(assoc %1 %2 (rand-int 100)) {} xs)))
+
+ (def random-integer-demo
+   "Target function: random integers in [0,100) mapped to a random collection of 4 integer arguments, with the result on :integer"
+   {:fxn #(get random-integer-pairs % 0)
+    :args (keys random-integer-pairs)
+    :behavior :integer
+    :error-function regression-error-function
+    })
+
 ;; string classification problems
 
 (def contains-T?-demo
   "Return true if the string contains at least one 'T' character, over the specified collection of inputs, with the result on :boolean"
   {:fxn (fn [s] (boolean (re-find #"T" s)))
-   :args ["GCG" "GACAG" "AGAAG" "CCCA" "GATTACA" "TAGG" "GACT"]
+   :args (sort ["GCG" "GACAG" "AGAAG" "CCCA" "GATTACA" "TAGG" "GACT"])
    :behavior :boolean
    :error-function binary-classification-error-function
    })
@@ -672,7 +693,7 @@
       )))
 
 (def string-args
-  (repeatedly 30 #(random-string ["A" "C" "G" "T"] 10))
+  (sort (repeatedly 30 #(random-string ["A" "C" "G" "T"] 10)))
   )
 
 (def contains-TA-or-AT?-demo
@@ -689,6 +710,7 @@
   {:simple-cubic simple-cubic-demo
    :simple-quadratic simple-quadratic-demo
    :birthday-quadratic birthday-quadratic-demo
+   :random-regression random-integer-demo
    :contains-T? contains-T?-demo
    :contains-TA-or-AT? contains-TA-or-AT?-demo
    })

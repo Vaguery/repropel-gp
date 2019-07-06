@@ -19,6 +19,7 @@
                 [venantius/accountant "0.2.4"
                   :exclusions [org.clojure/tools.reader]]
                 [reagent-forms "0.5.43"]
+                [org.clojure/core.async "0.4.500"]
                 ]
 
   :plugins [[lein-environ "1.1.0"]

@@ -173,6 +173,20 @@
     "Step!"
     ])
 
+(defn step-N
+  [pop-atom arg-atom gens]
+  (dotimes [g gens]
+    (forward-and-score pop-atom arg-atom)
+    ))
+
+(defn step-10-button
+  [pop-atom arg-atom]
+  [:button
+    {:on-click
+      #(step-N pop-atom arg-atom 10)}
+    "Step 10x!"
+    ])
+
 
 (reset-propel! population-atom arg-atom)
 
@@ -190,6 +204,7 @@
         [fancy-argmap-ui arg-atom]
         [reset-button population-atom arg-atom]
         [step-button population-atom arg-atom]
+        [step-10-button population-atom arg-atom]
         [show-counter]
         [population-view population-atom]
         ]]))

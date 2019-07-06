@@ -242,11 +242,11 @@
      1
      10
      100
-     789
+     1000
      true
      false
      ""
-     ; "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
      "A"
      "C"
      "G"

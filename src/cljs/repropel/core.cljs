@@ -59,6 +59,7 @@
       (row "Random regression" [:input {:field :radio :value :random-regression :name :target-problem}])
       (row "Contains-T?" [:input {:field :radio :value :contains-T? :name :target-problem}])
       (row "Contains-TA-or-AT?" [:input {:field :radio :value :contains-TA-or-AT? :name :target-problem}])
+      (row "Contains-CC-or-AT?" [:input {:field :radio :value :contains-CC-or-AT? :name :target-problem}])
 
     [:p "Parent selection"]
       (row "Tournament" [:input {:field :radio :value :tournament :name :parent-selection :checked true}])

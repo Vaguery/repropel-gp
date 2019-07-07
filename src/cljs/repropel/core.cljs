@@ -161,11 +161,10 @@
 
 (defn forward-and-score
   [pop-atom arg-atom]
-    (async/go
       (when-not @pause-atom
         (swap! pop-atom #(propel/propel-population-step % @arg-atom))
       (score-pop! pop-atom arg-atom)
-      (swap! counter-atom inc))
+      (swap! counter-atom inc)
       ))
 
 (defn step-button

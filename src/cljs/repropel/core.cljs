@@ -168,7 +168,7 @@
         [:li
           [:pre
             (gstring/format
-              "input: %s ☛ behavior: %s (error: %d)"
+              "input: %s produces '%s\n(error: %d)"
               (first i)
               (second i)
               (last i)

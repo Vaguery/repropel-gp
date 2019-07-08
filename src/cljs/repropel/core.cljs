@@ -8,6 +8,8 @@
    [repropel.propel :as propel]
    [reagent-forms.core :as rf]
    [cljs.core.async :as async]
+   [goog.string :as gstring]
+   [goog.string.format]
    ))
 
 ;; -------------------------
@@ -16,15 +18,15 @@
 (def router
   (reitit/router
    [["/" :index]
-    ["/about" :about]]
-    ))
+    ["/dude/:uuid" :individual]
+    ["/about" :about]
+    ]))
 
 (defn path-for [route & [params]]
   (if params
     (:path (reitit/match-by-name router route params))
     (:path (reitit/match-by-name router route))))
 
-(path-for :about)
 ;; -------------------------
 ;; Page components
 
@@ -112,7 +114,7 @@
   (do
     (propel/collect-the-args!
       arg-atom
-      :override-hash {:target-problem :simple-quadratic :population-size 100 :misbehavior-penalty +1e10})
+      :override-hash {:target-problem :simple-cubic :population-size 100 :misbehavior-penalty +1e10})
       (propel/propel-setup! pop-atom
                      (:population-size @arg-atom)
                      (:instructions @arg-atom)
@@ -123,18 +125,27 @@
 
 (reset-propel! population-atom arg-atom)
 
+(defn short-id
+  [uuid]
+  (str (first (clojure.string/split (str uuid) #"-")) "...")
+  )
 
-(defn dude-list [items]
+(defn dude-list [dudes]
   [:ol
-   (for [item items]
-     ^{:key (:id item)}
+   (for [dude dudes]
+     (let [uuid (str (:id dude))]
+     ^{:key uuid}
       [:li
-        (str (propel/push-from-plushy (:plushy item))
-              " => "
-              (:total-error item)
-              " : "
-              (propel/behavior-map (:training-function @arg-atom) item)
-              )])])
+        [:a {:href (path-for :individual {:uuid uuid})}
+        (short-id (:id dude))
+        ]
+        " => "
+
+        (:total-error dude)
+        " : "
+        (str (propel/push-from-plushy (:plushy dude)))
+        ]))])
+
 
 (defn population-view
   [pop-atom]
@@ -146,6 +157,22 @@
       [dude-list @pop-atom]
       ]])
 
+(defn behavior-view
+  [dude]
+  (let [b (seq (propel/behavior-map (:training-function @arg-atom) dude))
+        e (:errors dude)
+        both (map conj b e)]
+    [:ul
+      (for [i both]
+        ^{:key i}
+        [:li
+          [:pre
+            (gstring/format
+              "input: %s ☛ behavior: %s (error: %d)"
+              (first i)
+              (second i)
+              (last i)
+            )]])]))
 
 (defn reset-button
   [pop-atom arg-atom]
@@ -205,8 +232,10 @@
   []
   [:span ": " @counter-atom])
 
+
+;; PAGE definitions
+
 (defn home-page []
-  (let [])
   (fn []
     [:span.main
       [:h1 "Welcome to repropel"]
@@ -226,10 +255,26 @@
           [:h1 "About repropel"]]
           ))
 
-(defn dude-page [dude]
-  (fn [] [:span.main
-          [:h1 "Individual " (:id dude) ]]
-          ))
+(defn dude-page []
+  (fn []
+    (let [routing-data (session/get :route)
+          uuid (get-in routing-data [:route-params :uuid])
+          dude (first (filter #(= (str (:id %)) uuid) @population-atom))
+          push (propel/push-from-plushy (:plushy dude))]
+
+      [:span.main
+       [:h2 "Individual"]
+       [:code (str uuid)]
+
+       [:h3 "Genome"]
+       [:code (str (:plushy dude))]
+
+       [:h3 "Program"]
+       [:code (str push)]
+
+       [:h3 "Behavior"]
+       [behavior-view dude]
+       ])))
 
 ;; -------------------------
 ;; Translate routes -> page components
@@ -238,6 +283,7 @@
   (case route
     :index #'home-page
     :about #'about-page
+    :individual #'dude-page
     ))
 
 
